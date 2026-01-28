@@ -33,9 +33,7 @@ export default function Home() {
       if (minutes) totalSeconds += Number(minutes) * 60;
       if (seconds) totalSeconds += Number(seconds);
 
-      // If user inputs nothing for time, we send undefined (let backend decide or use 0 if that's the logic)
-      // Assuming existing backend handles undefined as "no limit" or default, or 0.
-      // But if user specifically entered 0s, it's 0.
+      // If user inputs nothing for time, we send undefined
       const ttl_seconds = (hours || minutes || seconds) ? totalSeconds : undefined;
 
       const payload = {
@@ -45,7 +43,24 @@ export default function Home() {
       };
 
       const data = await createPaste(payload);
-      setResult(data);
+
+      // Clear inputs
+      setContent("");
+      setHours("");
+      setMinutes("");
+      setSeconds("");
+      setViews("");
+
+      // Logic: Construct the Frontend URL
+      // We want to show: https://pastebin-frontend-peach.vercel.app/p/[id]
+      // or simply the current origin/p/[id]
+      const frontendUrl = `${window.location.origin}/p/${data.id}`;
+
+      setResult({
+        ...data,
+        frontendUrl
+      });
+
     } catch (err) {
       setError(err.message || "Something went wrong.");
     } finally {
@@ -54,8 +69,8 @@ export default function Home() {
   };
 
   const copyToClipboard = () => {
-    if (result?.url) {
-      navigator.clipboard.writeText(result.url);
+    if (result?.frontendUrl) {
+      navigator.clipboard.writeText(result.frontendUrl);
       alert("Link copied to clipboard!");
     }
   };
@@ -150,8 +165,8 @@ export default function Home() {
               Success! Your paste is ready:
             </div>
 
-            <a href={`/p/${result.id}`} className="result-link">
-              {result.url || `${window.location.origin}/p/${result.id}`}
+            <a href={result.frontendUrl} className="result-link">
+              {result.frontendUrl}
             </a>
 
             <button
